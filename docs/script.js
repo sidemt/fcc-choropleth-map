@@ -77,4 +77,48 @@ function drawChart(dataset) {
   }).catch(function(err) {
     console.log(err);
   });
+
+  // legend
+
+  const sample = colors.map(function(color) {
+    console.log(colorScale.invertExtent(color));
+    return colorScale.invertExtent(color);
+  });
+  console.log('sample: ' + sample);
+
+  // Scale for legend
+  const legendScale = d3
+      .scaleBand()
+      .domain(sample.map(function(item) {
+        return item[0];
+      }))
+      .range([0, 200]);
+
+  // Define legend area
+  const legendSvg = d3
+      .select('#legend')
+      .append('svg')
+      .attr('width', 200)
+      .attr('height', 40);
+
+  // Display legend
+  legendSvg
+      .selectAll('rect')
+      .data(sample)
+      .enter()
+      .append('rect')
+      .attr('width', legendScale.bandwidth())
+      .attr('height', 20)
+      .attr('fill', (d) => colorScale(d[0]))
+      .attr('x', (d, i) => i * legendScale.bandwidth())
+      .attr('y', 0);
+
+  // Configure legend axes
+  const legendAxis = d3.axisBottom(legendScale).tickFormat(d3.format('.1f'));
+
+  // Draw legend x-axis
+  legendSvg
+      .append('g')
+      .attr('transform', 'translate(0, 20)')
+      .call(legendAxis);
 }

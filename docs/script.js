@@ -52,6 +52,11 @@ function drawChart(dataset) {
     return result['bachelorsOrHigher'];
   }
 
+  // returns corresponding area_name of given county id
+  function findAreaName(id, eduDataset) {
+    const result = eduDataset.find( ({fips}) => fips === id );
+    return result['area_name'];
+  }
 
   // The SVG
   const svg = d3.select('#graph')
@@ -73,10 +78,35 @@ function drawChart(dataset) {
         .attr('data-fips', (d) => d['id'])
         .attr('data-education', (d) => findEduData(d['id'], dataset))
         .attr('fill', (d) => colorScale(findEduData(d['id'], dataset)))
-        .attr('class', 'county'); // required for the fcc test
+        .attr('class', 'county') // required for the fcc test
+        .on('mouseover', function(d) { // add tooltip
+          tooltip
+              .style('visibility', 'visible')
+              // id is required for fcc test
+              .html('<p>' + findAreaName(d['id'], dataset) + '<br>' +
+              findEduData(d['id'], dataset) + '%<br>' +
+                '</p>')
+              // required for fcc test
+              .attr('data-education', findEduData(d['id'], dataset));
+        })
+        .on('mousemove', function(d) {
+          tooltip
+              .style('top', d3.event.pageY - 20 + 'px')
+              .style('left', d3.event.pageX + 10 + 'px');
+        })
+        .on('mouseout', function(d) {
+          tooltip.style('visibility', 'hidden');
+        });
   }).catch(function(err) {
     console.log(err);
   });
+
+  // Tooltip (requires css)
+  const tooltip = d3
+      .select('body')
+      .append('div')
+      .attr('class', 'tooltip')
+      .attr('id', 'tooltip'); // required for fcc test
 
   // legend
 

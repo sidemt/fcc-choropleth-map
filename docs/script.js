@@ -1,6 +1,8 @@
 // US Education Data
+// const dataUrl =
+//   'https://raw.githubusercontent.com/no-stack-dub-sack/testable-projects-fcc/master/src/data/choropleth_map/for_user_education.json';
 const dataUrl =
-  'https://raw.githubusercontent.com/no-stack-dub-sack/testable-projects-fcc/master/src/data/choropleth_map/for_user_education.json';
+  'https://cdn.freecodecamp.org/testable-projects-fcc/data/choropleth_map/for_user_education.json';
 
 getDataset();
 
@@ -18,7 +20,7 @@ function getDataset() {
     json = JSON.parse(req.responseText);
     // use the value of "data" only
     const dataset = json;
-    drawChart(dataset);
+    drawChart(dataset); // dataset contains education data
   };
 };
 
@@ -30,6 +32,27 @@ function drawChart(dataset) {
 
   const path = d3.geoPath();
 
+  // Min and Max value of the variance
+  const minVari = d3.min(dataset, (d) => d['bachelorsOrHigher']);
+  const maxVari = d3.max(dataset, (d) => d['bachelorsOrHigher']);
+  console.log(minVari + ' / ' + maxVari);
+
+  // Define colors to be used for color scale
+  const colors = ['#F5E6E8', '#D5C6E0', '#AAA1C8', '#967AA1'];
+
+  // Build color scale
+  const colorScale = d3
+      .scaleQuantize()
+      .domain([minVari, maxVari])
+      .range(colors);
+
+  // returns corresponding education data of given county id
+  function findEduData(id, eduDataset) {
+    const result = eduDataset.find( ({fips}) => fips === id );
+    return result['bachelorsOrHigher'];
+  }
+
+
   // The SVG
   const svg = d3.select('#graph')
       .append('svg')
@@ -40,14 +63,17 @@ function drawChart(dataset) {
   const countyDataUrl =
     'https://raw.githubusercontent.com/no-stack-dub-sack/testable-projects-fcc/master/src/data/choropleth_map/counties.json';
 
-  d3.json(countyDataUrl).then(function(data) {
+  d3.json(countyDataUrl).then(function(data) { // draw counties
     svg.selectAll('path')
         // Refer to https://github.com/topojson/topojson-client/blob/master/README.md#feature
         .data(topojson.feature(data, data.objects.counties).features)
         .enter()
         .append('path')
         .attr('d', path)
-        .attr('fill', 'green');
+        .attr('data-fips', (d) => d['id'])
+        .attr('data-education', (d) => findEduData(d['id'], dataset))
+        .attr('fill', (d) => colorScale(findEduData(d['id'], dataset)))
+        .attr('class', 'county'); // required for the fcc test
   }).catch(function(err) {
     console.log(err);
   });
